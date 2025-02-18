@@ -5,33 +5,72 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Odliczanie do godziny</title>
     <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #000000;
+            --timeline-bg: #adadac;
+            --inactive-day: #adadac;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #1a1a1a;
+            --text-color: #ffffff;
+            --timeline-bg: #444444;
+            --inactive-day: #666666;
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: Lato, sans-serif;
             text-align: center;
             margin-top: 50px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
         }
+
+        #theme-toggle {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            background-color: var(--text-color);
+            color: var(--bg-color);
+        }
+
         #timer {
             font-size: 30px;
             font-weight: bold;
         }
+
+        #start-timer {
+            font-size: 24px;
+            color: #ff4c4c;
+            margin-bottom: 20px;
+        }
+
         .timeline-container {
             width: 80%;
             height: 20px;
-            background-color: #adadac;
+            background-color: var(--timeline-bg);
             margin: 20px auto;
             border-radius: 10px;
             position: relative;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
             overflow: hidden;
         }
+
         .highlighted-section {
             position: absolute;
             height: 100%;
             background-color: #ff4c4c;
-            width: 18.75%; /* odpowiada zakresowi od 8:30 do 10:00 */
+            width: 18.75%;
             left: 0;
             z-index: 1;
         }
+
         .timeline-bar {
             height: 100%;
             background-color: #4caf50;
@@ -41,6 +80,7 @@
             left: 0;
             z-index: 2;
         }
+
         .progress-label {
             position: absolute;
             top: 25px;
@@ -48,67 +88,109 @@
             font-weight: bold;
             white-space: nowrap;
         }
+
         .days-container {
             display: flex;
             justify-content: center;
             gap: 10px;
             margin-bottom: 10px;
         }
+
         .day {
-            color: #adadac;
+            color: var(--inactive-day);
             font-weight: bold;
         }
+
         .current-day {
-            color: #000000;
+            color: var(--text-color);
         }
     </style>
 </head>
 <body>
     <h2>Czas do końca pracy</h2>
+    <div id="start-timer"></div>
     <div id="timer"></div>
+    </br>
     <div id="days" class="days-container"></div>
     <div class="timeline-container">
         <div class="highlighted-section"></div>
         <div id="progress-label-green" class="progress-label">0%</div>
         <div id="timeline-bar-green" class="timeline-bar"></div>
     </div>
+    <div style="color: gray; font-size: 9px; letter-spacing: 2px;">TinyUrl.com/robotaju | absrdld.github.io</div>
+  <button id="theme-toggle">🌙</button>
     <script>
+        // Dark Mode
+        const themeToggle = document.getElementById('theme-toggle');
+        let isDark = false;
+
+        themeToggle.addEventListener('click', () => {
+            isDark = !isDark;
+            document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+            themeToggle.textContent = isDark ? '☀️' : '🌙';
+        });
+
         function updateTimer() {
             const now = new Date();
-            const targetTime = new Date();
-            targetTime.setHours(20, 30, 0, 0);
-            const timeDifference = targetTime - now;
-            if (timeDifference <= 0) {
-                document.getElementById("timer").innerText = "Koniec pracy na dziś!";
+            const startTime = new Date();
+            startTime.setHours(8, 30, 0, 0);
+            const endTime = new Date();
+            endTime.setHours(16, 30, 0, 0);
+
+            // Sprawdzanie czasu do rozpoczęcia pracy
+            if (now < startTime) {
+                const timeDifferenceToStart = startTime - now;
+                const hoursToStart = Math.floor(timeDifferenceToStart / (1000 * 60 * 60));
+                const minutesToStart = Math.floor((timeDifferenceToStart % (1000 * 60 * 60)) / (1000 * 60));
+                const secondsToStart = Math.floor((timeDifferenceToStart % (1000 * 60)) / 1000);
+                document.getElementById("start-timer").innerText = 
+                    `Do rozpoczęcia pracy pozostało: ${hoursToStart}:${minutesToStart.toString().padStart(2, '0')}:${secondsToStart.toString().padStart(2, '0')}`;
+            } else {
+                document.getElementById("start-timer").innerText = "";
+            }
+
+            // Sprawdzanie czasu do końca pracy
+            if (now > endTime) {
+                document.getElementById("timer").innerText = "Koniec pracy na dziś :3";
                 return;
             }
+
             const hours = now.getHours().toString().padStart(2, '0');
             const minutes = now.getMinutes().toString().padStart(2, '0');
             const seconds = now.getSeconds().toString().padStart(2, '0');
-            document.getElementById("timer").innerText = `${hours}:${minutes}:${seconds}`;
+            document.getElementById("timer").innerText = `${hours} godz. ${minutes} min. ${seconds} sek.`;
         }
-        setInterval(updateTimer, 1000);
+
         function updateProgress(startHour, startMinute, endHour, endMinute, barId, labelId) {
             const now = new Date();
             const start = new Date();
             start.setHours(startHour, startMinute, 0, 0);
             const end = new Date();
             end.setHours(endHour, endMinute, 0, 0);
+
+            if (now < start) {
+                document.getElementById(barId).style.width = "0%";
+                document.getElementById(labelId).innerText = "0%";
+                return;
+            }
+
             const elapsed = now - start;
             const totalDuration = end - start;
             const progress = Math.min((elapsed / totalDuration) * 100, 100).toFixed(3);
             document.getElementById(barId).style.width = progress + "%";
-            document.getElementById(labelId).innerText = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')} - ${progress}%`;
+            document.getElementById(labelId).innerText = 
+                `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')} - ${progress}%`;
             document.getElementById(labelId).style.left = `calc(${progress}% - 20px)`;
         }
+
         function updateAllTimelines() {
-            updateProgress(8, 30, 20, 30, "timeline-bar-green", "progress-label-green");
+            updateProgress(8, 30, 16, 30, "timeline-bar-green", "progress-label-green");
         }
-        setInterval(updateAllTimelines, 1000);
+
         function updateDays() {
             const days = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek"];
             const now = new Date();
-            const todayIndex = now.getDay() - 1; // 0 to Monday, 4 to Friday
+            const todayIndex = now.getDay() - 1;
             let daysHtml = "";
             days.forEach((day, index) => {
                 if (index === todayIndex) {
@@ -119,6 +201,9 @@
             });
             document.getElementById("days").innerHTML = daysHtml;
         }
+
+        setInterval(updateTimer, 1000);
+        setInterval(updateAllTimelines, 1000);
         updateDays();
     </script>
 </body>
