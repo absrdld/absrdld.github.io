@@ -1,9 +1,125 @@
-<!doctype html>
-<html>
-  <head>
-    <title>This is the title of the webpage!</title>
-  </head>
-  <body>
-    Projekt openKGD
-  </body>
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Odliczanie do godziny</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        #timer {
+            font-size: 30px;
+            font-weight: bold;
+        }
+        .timeline-container {
+            width: 80%;
+            height: 20px;
+            background-color: #adadac;
+            margin: 20px auto;
+            border-radius: 10px;
+            position: relative;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .highlighted-section {
+            position: absolute;
+            height: 100%;
+            background-color: #ff4c4c;
+            width: 18.75%; /* odpowiada zakresowi od 8:30 do 10:00 */
+            left: 0;
+            z-index: 1;
+        }
+        .timeline-bar {
+            height: 100%;
+            background-color: #4caf50;
+            border-radius: 10px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 2;
+        }
+        .progress-label {
+            position: absolute;
+            top: 25px;
+            font-size: 14px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        .days-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .day {
+            color: #adadac;
+            font-weight: bold;
+        }
+        .current-day {
+            color: #000000;
+        }
+    </style>
+</head>
+<body>
+    <h2>Czas do końca pracy</h2>
+    <div id="timer"></div>
+    <div id="days" class="days-container"></div>
+    <div class="timeline-container">
+        <div class="highlighted-section"></div>
+        <div id="progress-label-green" class="progress-label">0%</div>
+        <div id="timeline-bar-green" class="timeline-bar"></div>
+    </div>
+    <script>
+        function updateTimer() {
+            const now = new Date();
+            const targetTime = new Date();
+            targetTime.setHours(20, 30, 0, 0);
+            const timeDifference = targetTime - now;
+            if (timeDifference <= 0) {
+                document.getElementById("timer").innerText = "Koniec pracy na dziś!";
+                return;
+            }
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const seconds = now.getSeconds().toString().padStart(2, '0');
+            document.getElementById("timer").innerText = `${hours}:${minutes}:${seconds}`;
+        }
+        setInterval(updateTimer, 1000);
+        function updateProgress(startHour, startMinute, endHour, endMinute, barId, labelId) {
+            const now = new Date();
+            const start = new Date();
+            start.setHours(startHour, startMinute, 0, 0);
+            const end = new Date();
+            end.setHours(endHour, endMinute, 0, 0);
+            const elapsed = now - start;
+            const totalDuration = end - start;
+            const progress = Math.min((elapsed / totalDuration) * 100, 100).toFixed(3);
+            document.getElementById(barId).style.width = progress + "%";
+            document.getElementById(labelId).innerText = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')} - ${progress}%`;
+            document.getElementById(labelId).style.left = `calc(${progress}% - 20px)`;
+        }
+        function updateAllTimelines() {
+            updateProgress(8, 30, 20, 30, "timeline-bar-green", "progress-label-green");
+        }
+        setInterval(updateAllTimelines, 1000);
+        function updateDays() {
+            const days = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek"];
+            const now = new Date();
+            const todayIndex = now.getDay() - 1; // 0 to Monday, 4 to Friday
+            let daysHtml = "";
+            days.forEach((day, index) => {
+                if (index === todayIndex) {
+                    daysHtml += `<span class="day current-day">${day}</span>`;
+                } else {
+                    daysHtml += `<span class="day">${day}</span>`;
+                }
+            });
+            document.getElementById("days").innerHTML = daysHtml;
+        }
+        updateDays();
+    </script>
+</body>
 </html>
