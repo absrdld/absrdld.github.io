@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="description" content="Fajny kalkulatorek co mi pokazuje kiedy koniec roboty :3">
-    <title>Kiedy koniec pracy?</title>
+    <title>Odliczanie do godziny</title>
     <style>
         :root {
             --bg-color: #ffffff;
@@ -49,7 +47,7 @@
 
         #start-timer {
             font-size: 24px;
-            color: #ff4c4c;
+            color: #2590e8;
             margin-bottom: 20px;
         }
 
@@ -67,8 +65,8 @@
         .highlighted-section {
             position: absolute;
             height: 100%;
-            background-color: #ff4c4c;
-            width: 18.75%;
+            background-color: #777777;
+            width: 18%;
             left: 0;
             z-index: 1;
         }
@@ -116,11 +114,15 @@
     <div id="days" class="days-container"></div>
     <div class="timeline-container">
         <div class="highlighted-section"></div>
-        <div id="progress-label-green" class="progress-label">0%</div>
-        <div id="timeline-bar-green" class="timeline-bar"></div>
+        <!-- Wskaźnik postępu z tekstem w środku -->
+        <div id="timeline-bar-container" style="position: relative; width: 100%; height: 30px;">
+            <div id="timeline-bar-green" class="timeline-bar" style="position: absolute; top: 0; left: 0; height: 100%; background-color: green;"></div>
+            <div id="progress-label-green" class="progress-label" style="position: absolute; top: 3px; left: 50%; z-index: 10;transform: translateX(-50%); color: rgba(179, 188, 176, 20);">0%</div>
+        </div>
     </div>
     <div style="color: gray; font-size: 9px; letter-spacing: 2px;">TinyUrl.com/robotaju | absrdld.github.io</div>
-  <button id="theme-toggle">🌙</button>
+    <button id="theme-toggle">🌙</button>
+
     <script>
         // Dark Mode
         const themeToggle = document.getElementById('theme-toggle');
@@ -146,7 +148,7 @@
                 const minutesToStart = Math.floor((timeDifferenceToStart % (1000 * 60 * 60)) / (1000 * 60));
                 const secondsToStart = Math.floor((timeDifferenceToStart % (1000 * 60)) / 1000);
                 document.getElementById("start-timer").innerText = 
-                    `Do rozpoczęcia pracy pozostało: ${hoursToStart}:${minutesToStart.toString().padStart(2, '0')}:${secondsToStart.toString().padStart(2, '0')}`;
+                    `Start pracy za: ${hoursToStart}:${minutesToStart.toString().padStart(2, '0')}:${secondsToStart.toString().padStart(2, '0')}`;
             } else {
                 document.getElementById("start-timer").innerText = "";
             }
@@ -157,10 +159,13 @@
                 return;
             }
 
-            const hours = now.getHours().toString().padStart(2, '0');
-            const minutes = now.getMinutes().toString().padStart(2, '0');
-            const seconds = now.getSeconds().toString().padStart(2, '0');
-            document.getElementById("timer").innerText = `${hours} godz. ${minutes} min. ${seconds} sek.`;
+            // Obliczanie pozostałego czasu do końca pracy
+            const timeLeft = endTime - now;
+            const hoursLeft = Math.floor(timeLeft / (1000 * 60 * 60));
+            const minutesLeft = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+            const secondsLeft = Math.floor((timeLeft % (1000 * 60)) / 1000);
+          // czas do konca pracy
+            document.getElementById("timer").innerText = ` ${hoursLeft} godz. ${minutesLeft.toString().padStart(2, '0')} min. ${secondsLeft.toString().padStart(2, '0')} sek.`;
         }
 
         function updateProgress(startHour, startMinute, endHour, endMinute, barId, labelId) {
@@ -172,17 +177,15 @@
 
             if (now < start) {
                 document.getElementById(barId).style.width = "0%";
-                document.getElementById(labelId).innerText = "0%";
+                document.getElementById(labelId).innerText = "0.000%";
                 return;
             }
 
             const elapsed = now - start;
             const totalDuration = end - start;
-            const progress = Math.min((elapsed / totalDuration) * 100, 100).toFixed(3);
+            const progress = Math.min((elapsed / totalDuration) * 100, 100).toFixed(3); // Zaokrąglanie do 3 miejsc po przecinku
             document.getElementById(barId).style.width = progress + "%";
-            document.getElementById(labelId).innerText = 
-                `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')} - ${progress}%`;
-            document.getElementById(labelId).style.left = `calc(${progress}% - 20px)`;
+            document.getElementById(labelId).innerText = `${progress}%`; // Procentowy postęp z dokładnością do trzech miejsc po przecinku
         }
 
         function updateAllTimelines() {
